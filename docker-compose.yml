@@ -1,0 +1,54 @@
+services:
+  # APPS
+  red-app:
+    image: red
+    container_name: red-app
+    networks:
+      - traffic-light
+
+  yellow-app:
+    image: yellow
+    container_name: yellow-app
+    networks:
+      - traffic-light
+
+  green-app:  
+    image: green
+    container_name: green-app
+    networks:
+      - traffic-light
+
+  # PROXY REVERSE   (podemos acceder a cada app por localhost:3000, localhost:4000 y localhost:5000)
+  nginx-proxy:
+    image: nginx:1.21
+    container_name: nginx-proxy
+    depends_on:
+      - red-app
+      - yellow-app
+      - green-app
+    ports:
+      - "3000:3000"
+      - "4000:4000"
+      - "5000:5000"
+    volumes:
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+      - ./nginx/logs/:/var/log/nginx/
+    networks:
+      - traffic-light
+
+ # PROXY BALANCER    (accedemos al balanceador de carga por localhost y cada vez que actualicemos mostrará una app)
+  nginx-load-balancer:
+    image: nginx:1.21
+    container_name: nginx-load-balancer
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+      - ./var/log/nginx/:/var/log/nginx/
+    networks:
+      - traffic-light
+
+# DEFINIMOS LA RED TRAFFIC-LIGHT COMO EXTERNA
+networks:
+  traffic-light:
+    external: true
